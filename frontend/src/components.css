@@ -1,0 +1,359 @@
+.project-dialog {
+  border: 1px solid light-dark(#e1e6d7, var(--dark-border));
+  border-radius: 17px;
+  padding: 0;
+  background: light-dark(#fafbf7, var(--dark-surface));
+  color: light-dark(#3a513e, var(--dark-text));
+  width: 520px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 25px 90px #21322130;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+}
+.project-dialog::backdrop {
+  background: #26382d50;
+  backdrop-filter: blur(3px);
+}
+.dialog-inner {
+  padding: 35px;
+  position: relative;
+}
+.dialog-close {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+}
+.dialog-inner > .eyebrow {
+  justify-content: flex-start;
+  font-size: 9px;
+}
+.dialog-car {
+  width: 50px;
+  height: 50px;
+  display: grid;
+  place-items: center;
+  color: light-dark(#59754b, var(--dark-text));
+  border: 1px solid light-dark(#dce4d3, var(--dark-border));
+  background: light-dark(#eef3e7, var(--dark-surface-soft));
+  border-radius: 13px;
+  margin: 24px 0 18px;
+}
+.dialog-inner h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 29px;
+  letter-spacing: -0.8px;
+  margin: 0 0 25px;
+}
+.dialog-inner > p {
+  font-size: 12px;
+  color: light-dark(#8b967f, var(--dark-text-secondary));
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 17px 14px;
+}
+label {
+  font-size: 11px;
+  font-weight: 550;
+  color: light-dark(#6e7e60, var(--dark-text-secondary));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+input {
+  border: 1px solid light-dark(#dce3d3, var(--dark-border));
+  border-radius: 7px;
+  background: light-dark(#fffefa, var(--dark-surface));
+  padding: 11px 12px;
+  font-size: 12px;
+  width: 100%;
+}
+input:focus {
+  border-color: light-dark(#819e6d, var(--dark-accent));
+  box-shadow: 0 0 0 3px #9fb78a15;
+}
+input::placeholder {
+  color: light-dark(#b0b8a5, var(--dark-text-muted));
+  font-size: 11px;
+}
+.form-hint {
+  display: block;
+  color: light-dark(#a0aa94, var(--dark-text-muted));
+  font-size: 9px;
+  margin-top: 10px;
+}
+.project-name-label {
+  margin-top: 25px;
+  border-top: 1px solid light-dark(#e3e8db, var(--dark-border));
+  padding-top: 20px;
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 26px;
+}
+
+.markdown {
+  font-size: 13px;
+  line-height: 1.9;
+  color: light-dark(#566a4c, var(--dark-text));
+  overflow-wrap: anywhere;
+}
+.markdown p {
+  margin: 0 0 12px;
+}
+.markdown p:last-child {
+  margin-bottom: 0;
+}
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+}
+.markdown ul,
+.markdown ol {
+  padding-left: 22px;
+  margin: 10px 0;
+  list-style: revert;
+}
+.markdown li {
+  margin: 5px 0;
+}
+.markdown strong {
+  font-weight: 600;
+  color: light-dark(#3e5938, var(--dark-text));
+}
+.markdown pre {
+  background: light-dark(#edf1e5, var(--dark-surface-soft));
+  overflow: auto;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+.markdown code {
+  background: light-dark(#edf1e5, var(--dark-surface-soft));
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 11px;
+}
+.markdown a {
+  text-decoration: underline;
+}
+.markdown blockquote {
+  border-left: 3px solid light-dark(#bdcdb0, var(--dark-border));
+  padding-left: 15px;
+  margin: 15px 0;
+  color: light-dark(#849378, var(--dark-text-secondary));
+}
+.markdown table {
+  display: block;
+  overflow: auto;
+  border-collapse: collapse;
+  width: 100%;
+}
+.markdown th,
+.markdown td {
+  border: 1px solid light-dark(#dce4d2, var(--dark-border));
+  padding: 7px 10px;
+  text-align: left;
+}
+.sources {
+  border: 1px solid light-dark(#e2e8d7, var(--dark-border));
+  border-radius: 8px;
+  margin-top: 18px;
+  background: light-dark(#f7f9f1, var(--dark-surface));
+  padding: 0 12px;
+}
+.sources summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: light-dark(#7f926c, var(--dark-text-secondary));
+  font-size: 10px;
+  cursor: pointer;
+  padding: 12px 0;
+  list-style: none;
+}
+.sources summary::-webkit-details-marker {
+  display: none;
+}
+.sources summary > span {
+  background: light-dark(#e8efdd, var(--dark-surface-active));
+  border-radius: 4px;
+  padding: 0 5px;
+}
+.sources summary > svg:last-child {
+  margin-left: auto;
+}
+.sources > p {
+  font-size: 10px;
+  color: light-dark(#96a287, var(--dark-text-muted));
+  line-height: 1.7;
+  margin: 0 0 15px;
+}
+.source {
+  border-top: 1px solid light-dark(#e2e8d7, var(--dark-border));
+  padding: 12px 0;
+}
+.source a {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: light-dark(#6d8659, var(--dark-text-secondary));
+}
+.source a span {
+  font-weight: 400;
+  color: light-dark(#96a485, var(--dark-text-muted));
+}
+.source p {
+  white-space: pre-wrap;
+  font-size: 11px;
+  line-height: 1.8;
+  color: light-dark(#8e9c7e, var(--dark-text-secondary));
+  max-height: 180px;
+  overflow-y: auto;
+  margin: 8px 0 0;
+}
+
+.vehicle-field {
+  position: relative;
+  min-width: 0;
+}
+.vehicle-field > label {
+  margin-bottom: 8px;
+}
+.vehicle-field:focus-within {
+  z-index: 5;
+}
+.vehicle-combobox {
+  position: relative;
+}
+.vehicle-combobox input {
+  padding-right: 34px;
+}
+.vehicle-combobox.is-expanded input {
+  border-color: light-dark(#8aa079, var(--dark-accent));
+  box-shadow: 0 0 0 3px #9fb78a15;
+}
+.combobox-toggle {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 5px;
+  color: light-dark(#839573, var(--dark-text-secondary));
+}
+.combobox-toggle:hover {
+  background: light-dark(#edf2e5, var(--dark-surface-soft));
+  color: light-dark(#355a43, var(--dark-text));
+}
+.combobox-toggle svg {
+  transition: transform 0.15s;
+}
+.is-expanded .combobox-toggle svg {
+  transform: rotate(180deg);
+}
+.combobox-popover {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: light-dark(#fffefa, var(--dark-surface));
+  border: 1px solid light-dark(#d9e2ce, var(--dark-border));
+  border-radius: 10px;
+  box-shadow:
+    0 14px 35px #2d432324,
+    0 3px 8px #2d432309;
+  padding: 5px;
+  overflow: hidden;
+}
+.combobox-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px 9px;
+  font-size: 9px;
+  color: light-dark(#8b9a7b, var(--dark-text-secondary));
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid light-dark(#edf0e7, var(--dark-border));
+  margin-bottom: 4px;
+}
+.combobox-caption > span:last-child {
+  margin-left: auto;
+  border-radius: 4px;
+  background: light-dark(#f0f4e9, var(--dark-surface-soft));
+  padding: 1px 5px;
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.combobox-options {
+  max-height: 190px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: light-dark(#cbd7bf, var(--dark-border)) transparent;
+}
+.combobox-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 6px;
+  color: light-dark(#5e7351, var(--dark-text));
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: 35px;
+}
+.combobox-option > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.combobox-option[aria-selected="true"] {
+  color: light-dark(#355a43, var(--dark-text));
+  font-weight: 600;
+}
+.combobox-option.is-active,
+.combobox-option:hover {
+  background: light-dark(#edf3e4, var(--dark-surface-soft));
+  color: light-dark(#355a43, var(--dark-text));
+}
+.combobox-option svg {
+  color: light-dark(#6d8958, var(--dark-text-secondary));
+  flex-shrink: 0;
+}
+.custom-option {
+  color: light-dark(#6a8554, var(--dark-text-secondary));
+  background: light-dark(#f5f8ef, var(--dark-surface-soft));
+}
+.combobox-empty {
+  font-size: 11px;
+  line-height: 1.7;
+  color: light-dark(#899b78, var(--dark-text-secondary));
+  padding: 8px;
+  margin: 0;
+}
+.combobox-footer {
+  padding: 9px 8px 5px;
+  margin-top: 4px;
+  border-top: 1px solid light-dark(#edf0e7, var(--dark-border));
+  color: light-dark(#9aa78b, var(--dark-text-muted));
+  font-size: 9px;
+  line-height: 1.5;
+}

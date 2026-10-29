@@ -1,0 +1,46 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: gruz
+      POSTGRES_PASSWORD: gruz
+      POSTGRES_DB: gruz
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gruz"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://gruz:gruz@db:5432/gruz
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CHAT_MODEL: ${CHAT_MODEL:-openai:gpt-4.1-mini}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - uploads:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "uv", "run", "--no-sync", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+volumes:
+  postgres_data:
+  uploads:
