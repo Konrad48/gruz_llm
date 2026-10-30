@@ -16,11 +16,11 @@ services:
       retries: 20
   backend:
     build: ./backend
+    env_file:
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql+psycopg://gruz:gruz@db:5432/gruz
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      CHAT_MODEL: ${CHAT_MODEL:-openai:gpt-4.1-mini}
-      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+    shm_size: "1gb"
     ports:
       - "127.0.0.1:8000:8000"
     volumes:

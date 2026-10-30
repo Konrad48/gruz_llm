@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import {
   ChevronLeft,
@@ -50,6 +50,12 @@ export default function PdfView({
     [active, setActive] = useState(false);
   const viewport = useRef<HTMLDivElement>(null),
     root = useRef<HTMLDivElement>(null);
+  // React-PDF restarts its text layer when this callback changes. Keep it stable
+  // so measuring the citation does not clear and rebuild the text layer.
+  const handleTextLayerSuccess = useCallback(
+    () => setTextVersion((value) => value + 1),
+    [],
+  );
   useEffect(() => {
     const element = viewport.current;
     if (!element) return;
@@ -62,7 +68,8 @@ export default function PdfView({
   useEffect(() => {
     setBoxes([]);
     setActive(false);
-    if (!excerpt || !root.current || !textVersion) return;
+    if (!excerpt || page !== initialPage || !root.current || !textVersion)
+      return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const frame = requestAnimationFrame(() => {
       if (!root.current) return;
@@ -89,7 +96,7 @@ export default function PdfView({
       cancelAnimationFrame(frame);
       if (timer) clearTimeout(timer);
     };
-  }, [textVersion, excerpt, page, width, zoom]);
+  }, [textVersion, excerpt, page, initialPage, width, zoom, reportMatch]);
   return (
     <>
       <div className="pdf-toolbar">
@@ -162,15 +169,14 @@ export default function PdfView({
         >
           <div className="pdf-page-root" ref={root}>
             <Page
+              key={page}
               pageNumber={page}
               width={width * zoom}
               renderTextLayer
               renderAnnotationLayer={false}
               suspense={false}
               devicePixelRatio={Math.min(window.devicePixelRatio || 1, 1.5)}
-              onRenderTextLayerSuccess={() =>
-                setTextVersion((value) => value + 1)
-              }
+              onRenderTextLayerSuccess={handleTextLayerSuccess}
               onRenderError={() => setError(true)}
               loading={
                 <div className="center-state">

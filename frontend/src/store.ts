@@ -16,6 +16,9 @@ export interface Chat {
   title: string;
 }
 export interface Source {
+  kind?: "web";
+  url?: string;
+  retrieved_at?: string;
   id: string;
   document_id: string;
   name: string;
@@ -54,6 +57,16 @@ export interface ExecutionEvent {
     source_count?: number;
     reason?: string;
     vehicle?: string;
+    url?: string;
+    error?: string;
+    errors?: string[];
+    search_query?: string | null;
+    marketplace?: string;
+    provider?: string;
+    status?: string;
+    http_status?: number | null;
+    availability?: string;
+    results?: { title: string; url: string; snippet?: string }[];
   };
 }
 export interface Doc {

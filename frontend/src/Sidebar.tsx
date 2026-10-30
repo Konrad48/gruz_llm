@@ -6,7 +6,6 @@ import {
   FileText,
   Globe2,
   LayoutGrid,
-  MessageSquare,
   Monitor,
   Moon,
   Plus,
@@ -15,12 +14,15 @@ import {
 } from "lucide-react";
 import { useGarage, type Project } from "./store";
 import { translations } from "./i18n";
+import ChatHistoryItem from "./ChatHistoryItem";
 
 export default function Sidebar({
   mobile,
   sending,
   chooseProject,
   chooseChat,
+  renameChat,
+  deleteChat,
   navigate,
   addProject,
 }: {
@@ -28,6 +30,8 @@ export default function Sidebar({
   sending: boolean;
   chooseProject: (id: string) => void;
   chooseChat: (id: string | null) => void;
+  renameChat: (id: string, title: string) => Promise<boolean>;
+  deleteChat: (id: string) => Promise<void>;
   navigate: (view: "garage" | "documents") => void;
   addProject: () => void;
 }) {
@@ -197,17 +201,15 @@ export default function Sidebar({
       </div>
       <div className="chat-list">
         {s.chats.map((chat) => (
-          <button
+          <ChatHistoryItem
             key={chat.id}
+            chat={chat}
             disabled={sending}
-            className={`chat-item ${s.view === "chat" && s.selectedChat === chat.id ? "selected" : ""}`}
-            onClick={() => chooseChat(chat.id)}
-          >
-            <MessageSquare size={15} />
-            <span>
-              {chat.title === "New conversation" ? t.defaultChat : chat.title}
-            </span>
-          </button>
+            selected={s.view === "chat" && s.selectedChat === chat.id}
+            chooseChat={chooseChat}
+            renameChat={renameChat}
+            deleteChat={deleteChat}
+          />
         ))}
         {!s.chats.length && <p className="sidebar-empty">{t.noChats}</p>}
       </div>

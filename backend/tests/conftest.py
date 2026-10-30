@@ -9,6 +9,11 @@ from app.main import app
 from app.models import Project
 
 
+@pytest.fixture(autouse=True)
+def disable_external_tracing(monkeypatch):
+    monkeypatch.setattr(settings, "langfuse_tracing_enabled", False)
+
+
 @pytest.fixture
 def client(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "upload_dir", str(tmp_path))
@@ -24,7 +29,8 @@ def client(monkeypatch, tmp_path):
     def fake_agent():
         agent = original()
         agent.model = TestModel(
-            custom_output_text="See manual.txt, text. Inspect the idle air hoses."
+            call_tools=["search_documents"],
+            custom_output_text="See manual.txt, text. Inspect the idle air hoses.",
         )
         return agent
 

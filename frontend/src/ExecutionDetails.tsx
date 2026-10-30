@@ -21,6 +21,16 @@ function activityLabel(
     embedding_started: t.embeddingQuery,
     embedding_completed: t.queryEmbedded,
     search_completed: t.searchFinished,
+    web_search_started: t.webSearching,
+    web_search_completed: t.webSearchCompleted,
+    web_search_failed: t.webFailed,
+    web_read_started: t.webReading,
+    web_read_completed: t.webReadCompleted,
+    web_read_failed: t.webFailed,
+    web_marketplace_started: t.marketplaceSearching,
+    web_marketplace_completed: t.marketplaceSearched,
+    web_marketplace_failed: t.webFailed,
+    web_visit: t.websiteVisit,
     model_started: t.generatingResponse,
     model_completed: t.modelResponded,
     tool_started: t.callingTool,
@@ -42,7 +52,9 @@ export function LiveExecutionActivity({
     t = translations[language];
   const latest = events.at(-1);
   const searching =
-    latest?.kind.startsWith("search_") || latest?.kind.startsWith("embedding_");
+    latest?.kind.startsWith("search_") ||
+    latest?.kind.startsWith("embedding_") ||
+    latest?.kind.startsWith("web_");
   const reverse = [...events].reverse();
   const query = searching
     ? reverse.find((event) => event.data.query)?.data.query
@@ -105,9 +117,10 @@ export default function ExecutionDetails({
           const current = running && index === events.length - 1;
           const Icon = current
             ? LoaderCircle
-            : event.kind === "run_failed"
+            : event.kind.endsWith("_failed")
               ? CircleAlert
-              : event.kind.startsWith("search_")
+              : event.kind.startsWith("search_") ||
+                  event.kind.startsWith("web_")
                 ? Search
                 : event.kind.startsWith("tool_")
                   ? Wrench
@@ -141,7 +154,68 @@ export default function ExecutionDetails({
                   <pre>{JSON.stringify(event.data.arguments, null, 2)}</pre>
                 )}
                 {event.data.query && (
-                  <blockquote>{event.data.query}</blockquote>
+                  <>
+                    <p>{t.searchQuery}</p>
+                    <blockquote>{event.data.query}</blockquote>
+                  </>
+                )}
+                {event.data.search_query && (
+                  <>
+                    <p>{t.engineQuery}</p>
+                    <blockquote>{event.data.search_query}</blockquote>
+                  </>
+                )}
+                {event.data.provider && <p>{event.data.provider}</p>}
+                {event.data.marketplace && <p>{event.data.marketplace}</p>}
+                {event.data.url && /^https?:\/\//i.test(event.data.url) && (
+                  <p>
+                    <a
+                      href={event.data.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {event.kind === "web_marketplace_completed"
+                        ? t.marketplaceSearchPage
+                        : event.data.url}
+                    </a>
+                  </p>
+                )}
+                {event.data.status && (
+                  <p>
+                    {event.data.status === "visited"
+                      ? t.visited
+                      : event.data.status === "redirected"
+                        ? t.redirected
+                        : t.attempted}
+                    {event.data.http_status != null &&
+                      ` · HTTP ${event.data.http_status}`}
+                  </p>
+                )}
+                {event.data.error && <p>{event.data.error}</p>}
+                {event.data.errors?.map((error, i) => (
+                  <p key={i}>{error}</p>
+                ))}
+                {event.data.availability === "unverified" && (
+                  <p>{t.unverifiedListings}</p>
+                )}
+                {!!event.data.results?.length && (
+                  <ul>
+                    {event.data.results.map((result) => (
+                      <li key={result.url}>
+                        {/^https?:\/\//i.test(result.url) && (
+                          <a
+                            href={result.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {result.title}
+                          </a>
+                        )}
+                        <p>{result.url}</p>
+                        {result.snippet && <p>{result.snippet}</p>}
+                      </li>
+                    ))}
+                  </ul>
                 )}
                 {event.data.method && (
                   <p>
@@ -155,7 +229,10 @@ export default function ExecutionDetails({
                 )}
                 {event.data.count !== undefined && (
                   <p>
-                    {t.searchResults}: {event.data.count}
+                    {event.kind.startsWith("web_")
+                      ? t.webResults
+                      : t.searchResults}
+                    : {event.data.count}
                   </p>
                 )}
                 {event.data.request !== undefined && (
@@ -193,7 +270,9 @@ export default function ExecutionDetails({
                     <summary>
                       <span>{source.name}</span>
                       <span>
-                        {source.location} · {source.score.toFixed(3)}
+                        {source.location}
+                        {source.kind !== "web" &&
+                          ` · ${source.score.toFixed(3)}`}
                       </span>
                     </summary>
                     <p>{source.excerpt}</p>

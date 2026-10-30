@@ -10,6 +10,7 @@ from pypdf import PdfReader
 from .config import settings
 from .db import SessionLocal
 from .models import Chunk, Document
+from .telemetry import get_langfuse, trace_operation
 
 SUPPORTED = {".pdf", ".txt", ".md", ".csv", ".docx", ".xlsx"}
 MAX_BYTES = 20 * 1024 * 1024
@@ -81,16 +82,35 @@ async def embed(texts: list[str]) -> list[list[float]]:
     async with AsyncOpenAI(
         api_key=settings.openai_api_key, timeout=60, max_retries=2
     ) as client:
-        response = await client.embeddings.create(
-            model=settings.embedding_model, input=texts, dimensions=1536
-        )
+        langfuse = get_langfuse()
+        if langfuse is None:
+            response = await client.embeddings.create(
+                model=settings.embedding_model, input=texts, dimensions=1536
+            )
+        else:
+            with langfuse.start_as_current_observation(
+                name="openai-embeddings",
+                as_type="embedding",
+                model=settings.embedding_model,
+                input=texts,
+            ) as observation:
+                response = await client.embeddings.create(
+                    model=settings.embedding_model, input=texts, dimensions=1536
+                )
+                observation.update(
+                    usage_details={"input": response.usage.prompt_tokens},
+                    metadata={"dimensions": 1536, "count": len(texts)},
+                )
         return [
             item.embedding
             for item in sorted(response.data, key=lambda item: item.index)
         ]
 
 
+@trace_operation("index-document", capture_output=False)
 async def index_document(document_id: str, path: Path, suffix: str):
+    if (langfuse := get_langfuse()) is not None:
+        langfuse.update_current_span(metadata={"document_id": document_id})
     try:
         from starlette.concurrency import run_in_threadpool
 
@@ -118,6 +138,12 @@ async def index_document(document_id: str, path: Path, suffix: str):
             doc.status, doc.chunk_count = "ready", len(pieces)
             db.commit()
     except Exception as exc:
+        if (langfuse := get_langfuse()) is not None:
+            langfuse.update_current_span(
+                level="ERROR",
+                status_message=str(exc),
+                metadata={"document_id": document_id},
+            )
         logger.exception("Document indexing failed: %s", document_id)
         with SessionLocal() as db:
             doc = db.get(Document, document_id)

@@ -20,12 +20,14 @@ from .execution import ExecutionTrace
 from .ingestion import MAX_BYTES, SUPPORTED, index_document
 from .models import Chat, Chunk, Document, Message, Project
 from .preview import document_preview
+from .telemetry import flush_traces, get_langfuse, trace_turn
 
 running_generations: set[asyncio.Task] = set()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    get_langfuse()
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     with SessionLocal() as db:
         db.execute(
@@ -55,11 +57,14 @@ async def lifespan(app: FastAPI):
                 },
             ]
         db.commit()
-    yield
-    for task in list(running_generations):
-        task.cancel()
-    if running_generations:
-        await asyncio.gather(*running_generations, return_exceptions=True)
+    try:
+        yield
+    finally:
+        for task in list(running_generations):
+            task.cancel()
+        if running_generations:
+            await asyncio.gather(*running_generations, return_exceptions=True)
+        await asyncio.to_thread(flush_traces)
 
 
 app = FastAPI(title="Gruz LLM", version="0.1.0", lifespan=lifespan)
@@ -98,6 +103,17 @@ class DocumentOut(BaseModel):
     error: str | None
     chunk_count: int
     created_at: datetime
+
+
+class ChatInput(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+
+    @field_validator("title")
+    @classmethod
+    def clean_title(cls, value):
+        if not value.strip():
+            raise ValueError("Must not be blank")
+        return value.strip()
 
 
 class ChatOut(BaseModel):
@@ -296,6 +312,32 @@ def create_chat(id: str, db: DB):
     return chat
 
 
+@app.patch("/api/chats/{id}", response_model=ChatOut)
+def rename_chat(id: str, body: ChatInput, db: DB):
+    chat = require(db, Chat, id)
+    chat.title = body.title
+    db.commit()
+    return chat
+
+
+@app.delete("/api/chats/{id}", status_code=204)
+def delete_chat(id: str, db: DB):
+    chat = require(db, Chat, id)
+    # Match the generation lock used by send/stream across backend processes.
+    locked = db.scalar(
+        text("SELECT pg_try_advisory_xact_lock(hashtext(:id))"), {"id": id}
+    )
+    generating = db.scalar(
+        select(Message.id).where(Message.chat_id == id, Message.status == "generating")
+    )
+    if not locked or generating:
+        raise HTTPException(
+            409, "Wait for the response to finish before deleting this chat."
+        )
+    db.delete(chat)
+    db.commit()
+
+
 @app.get("/api/chats/{id}/messages", response_model=list[MessageOut])
 def messages(id: str, db: DB):
     require(db, Chat, id)
@@ -337,10 +379,13 @@ async def send(id: str, body: Question, db: DB):
     )
     try:
         trace = ExecutionTrace()
-        async with asyncio.timeout(120):
-            content, sources = await answer(
-                db, project, history, body.content.strip(), body.language, trace
-            )
+        with trace_turn(id, project.id, body.content.strip()) as observation:
+            async with asyncio.timeout(120):
+                content, sources = await answer(
+                    db, project, history, body.content.strip(), body.language, trace
+                )
+            if observation is not None:
+                observation.update(output={"answer": content, "sources": sources})
     except Exception as exc:
         logger.exception("Assistant failed for chat %s", id)
         db.rollback()
@@ -360,7 +405,7 @@ async def send(id: str, body: Question, db: DB):
         execution=trace.events,
     )
     db.add(assistant)
-    if not history:
+    if not history and chat.title == "New conversation":
         chat.title = body.content.strip()[:80]
     db.commit()
     return [user, assistant]
@@ -387,7 +432,7 @@ async def generate_streamed_turn(
 
         async def publish(event):
             assistant.execution = list(trace.events)
-            if event["kind"] == "search_completed":
+            if event["kind"] in {"search_completed", "web_read_completed"}:
                 sources = {source["id"]: source for source in assistant.sources}
                 sources.update(
                     {source["id"]: source for source in event["data"]["sources"]}
@@ -413,10 +458,13 @@ async def generate_streamed_turn(
                     .order_by(Message.created_at, Message.id)
                 )
             )
-            async with asyncio.timeout(120):
-                content, sources = await answer(
-                    db, project, history, question, language, trace
-                )
+            with trace_turn(chat_id, project.id, question) as observation:
+                async with asyncio.timeout(120):
+                    content, sources = await answer(
+                        db, project, history, question, language, trace
+                    )
+                if observation is not None:
+                    observation.update(output={"answer": content, "sources": sources})
             assistant.content, assistant.sources, assistant.status = (
                 content,
                 sources,

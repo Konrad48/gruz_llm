@@ -22,6 +22,15 @@ export default function MessageInsightsDrawer({
   const id = useId();
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const sourceTrigger = useRef<HTMLButtonElement | null>(null);
+  const sourceGroups = new Map<string, { name: string; sources: Source[] }>();
+  for (const source of message.sources) {
+    let group = sourceGroups.get(source.document_id);
+    if (!group) {
+      group = { name: source.name, sources: [] };
+      sourceGroups.set(source.document_id, group);
+    }
+    group.sources.push(source);
+  }
   function openSource(source: Source, trigger: HTMLButtonElement) {
     sourceTrigger.current = trigger;
     setPreview({
@@ -146,34 +155,54 @@ export default function MessageInsightsDrawer({
             >
               {panel === "sources" ? (
                 message.sources.length ? (
-                  <>
-                    <p className="insights-source-note">{t.sourceNote}</p>
-                    <ol className="drawer-sources">
-                      {message.sources.map((source, index) => (
-                        <li key={source.id} className="drawer-source">
-                          <div className="drawer-source-heading">
-                            <span className="source-number">{index + 1}</span>
-                            <FileText size={16} />
-                            <button
-                              onClick={(event) =>
-                                openSource(source, event.currentTarget)
-                              }
-                              title={t.preview}
-                            >
-                              {source.name}
-                            </button>
-                          </div>
-                          <div className="drawer-source-meta">
-                            <span>{source.location}</span>
-                            <span>
-                              {t.similarity}: {source.score.toFixed(3)}
-                            </span>
-                          </div>
-                          <p>{source.excerpt}</p>
-                        </li>
-                      ))}
-                    </ol>
-                  </>
+                  <ul className="drawer-sources">
+                    {Array.from(sourceGroups, ([documentId, group]) => (
+                      <li key={documentId} className="drawer-source">
+                        <div className="drawer-source-heading">
+                          <FileText size={16} />
+                          <h3>{group.name}</h3>
+                        </div>
+                        <ul className="source-location-list">
+                          {group.sources.map((source) => (
+                            <li key={source.id}>
+                              {source.kind === "web" &&
+                              source.url &&
+                              /^https?:\/\//i.test(source.url) ? (
+                                <>
+                                  <a
+                                    className="source-location-link"
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {source.url}
+                                  </a>
+                                  <details>
+                                    <summary>{t.webExcerpt}</summary>
+                                    <p>{source.excerpt}</p>
+                                    <small>{source.retrieved_at}</small>
+                                  </details>
+                                </>
+                              ) : (
+                                <button
+                                  className="source-location-link"
+                                  aria-pressed={
+                                    preview?.source?.id === source.id
+                                  }
+                                  title={`${group.name} · ${source.location}`}
+                                  onClick={(event) =>
+                                    openSource(source, event.currentTarget)
+                                  }
+                                >
+                                  {source.location || t.preview}
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <p className="insights-empty">{t.noSources}</p>
                 )

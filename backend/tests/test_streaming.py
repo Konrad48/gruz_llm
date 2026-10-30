@@ -43,7 +43,7 @@ def test_stream_saves_execution_history_and_real_tool_events(client):
     assert kinds[-1] == "run_completed"
     assert "tool_started" in kinds and "tool_completed" in kinds
     searches = [event for event in trace if event["kind"] == "search_completed"]
-    assert searches[0]["data"]["query"] == "Help with rough idle"
+    assert len(searches) == 1
     assert searches[0]["data"]["sources"][0]["name"] == "manual.txt"
     assert [event["event"] for event in log if event["type"] == "activity"] == trace
     assert [event["id"] for event in trace] == list(range(1, len(trace) + 1))

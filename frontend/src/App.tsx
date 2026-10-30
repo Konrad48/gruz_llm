@@ -453,6 +453,37 @@ export default function App() {
         sending={generating}
         chooseProject={chooseProject}
         chooseChat={chooseChat}
+        renameChat={async (id, title) => {
+          try {
+            const chat = await api<Chat>(`/chats/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title }),
+            });
+            const state = useGarage.getState();
+            s.set({
+              chats: state.chats.map((item) => (item.id === id ? chat : item)),
+            });
+            return true;
+          } catch (e) {
+            report(e);
+            return false;
+          }
+        }}
+        deleteChat={async (id) => {
+          try {
+            await api(`/chats/${id}`, { method: "DELETE" });
+            const state = useGarage.getState();
+            s.set({
+              chats: state.chats.filter((chat) => chat.id !== id),
+              ...(state.selectedChat === id
+                ? { selectedChat: null, messages: [] }
+                : {}),
+            });
+          } catch (e) {
+            report(e);
+          }
+        }}
         navigate={navigate}
         addProject={addProject}
       />

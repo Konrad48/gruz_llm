@@ -107,3 +107,21 @@ def test_preview_source_isolation_and_original_pdf_ranges(client):
 
     (Path(settings.upload_dir) / pdf_id).unlink()
     assert client.get(f"/api/documents/{pdf_id}/preview").status_code == 404
+
+
+def test_uploaded_spreadsheet_preview_uses_extensionless_original(client):
+    project = client.create_project()
+    book = Workbook()
+    book.active.title = "Parts"
+    book.active.append(["Plate", "Inspect before assembly"])
+    data = BytesIO()
+    book.save(data)
+    uploaded = client.post(
+        f"/api/projects/{project}/documents",
+        files={"file": ("parts.xlsx", data.getvalue())},
+    )
+    doc_id = uploaded.json()["id"]
+    response = client.get(f"/api/documents/{doc_id}/preview")
+    assert response.status_code == 200, response.text
+    assert response.json()["sheet"] == "Parts"
+    assert response.json()["rows"] == [["Plate", "Inspect before assembly"]]

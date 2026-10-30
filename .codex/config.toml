@@ -1,0 +1,13 @@
+[mcp_servers.langfuse]
+url = "https://cloud.langfuse.com/api/public/mcp"
+env_http_headers = { Authorization = "LANGFUSE_MCP_AUTH" }
+enabled_tools = [
+  "listObservations",
+  "getObservation",
+  "getObservationFieldSchema",
+  "getObservationFilterSchema",
+  "getObservationFilterValues",
+  "queryMetrics",
+  "getMetricsSchema",
+  "getHealth",
+]

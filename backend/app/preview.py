@@ -3,7 +3,7 @@
 import csv
 import re
 from bisect import bisect_right
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from unicodedata import normalize
 from zipfile import ZipFile
@@ -147,7 +147,9 @@ def spreadsheet_content(
         }
 
     validate_archive(path)
-    book = load_workbook(path, read_only=True, data_only=True)
+    # Stored originals use their UUID without a file extension. Load a stream so
+    # openpyxl validates the archive rather than rejecting the storage filename.
+    book = load_workbook(BytesIO(path.read_bytes()), read_only=True, data_only=True)
     try:
         sheets = [
             {
